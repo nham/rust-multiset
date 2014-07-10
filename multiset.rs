@@ -17,6 +17,10 @@ pub trait Multiset<T>: Collection {
     fn contains(&self, value: &T) -> bool {
         self.count(value) > 0u
     }
+
+    // FIXME: Ideally we would have a method to return the underlying set
+    // of a multiset. However, currently there's no way to have a trait method 
+    // return a trait. We need something like associated type synonyms (see #5033)
 }
 
 pub trait MutableMultiset<T>: Multiset<T> + Mutable {
