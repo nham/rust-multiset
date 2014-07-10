@@ -9,9 +9,6 @@ pub trait Multiset<T>: Collection {
     /// not greater than x's multiplicity in `other`
     fn is_subset(&self, other: &Self) -> bool;
 
-    /// Return the underlying set of the multiset
-    fn to_set(&self) -> Set<T>;
-
     /// Return true if the value occurs at least once in the multiset
     fn contains(&self, value: &T) -> bool {
         self.count(value) > 0u
