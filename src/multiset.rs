@@ -47,6 +47,24 @@ impl<T: Ord> Mutable for TreeMultiset<T> {
     fn clear(&mut self) { self.map.clear() }
 }
 
+
+impl<T: Ord> Extendable<T> for TreeMultiset<T> {
+    #[inline]
+    fn extend<Iter: Iterator<T>>(&mut self, mut iter: Iter) {
+        for elem in iter {
+            self.insert(elem, 1);
+        }
+    }
+}
+
+impl<T: Ord> FromIterator<T> for TreeMultiset<T> {
+    fn from_iter<Iter: Iterator<T>>(iter: Iter) -> TreeMultiset<T> {
+        let mut mset = TreeMultiset::new();
+        mset.extend(iter);
+        mset
+    }
+}
+
 impl<T: Ord> Multiset<T> for TreeMultiset<T> {
     #[inline]
     fn count(&self, value: &T) -> uint {
