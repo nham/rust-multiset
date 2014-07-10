@@ -31,7 +31,7 @@ pub trait MutableMultiset<T>: Multiset<T> + Mutable {
     /// Remove `n` occurrences of `value` from the multiset. If there are less than
     /// `n` occurrences, remove all occurrences. Return the number of occurrences
     /// removed.
-    fn remove(&mut self, value: T, n: uint) -> uint;
+    fn remove(&mut self, value: &T, n: uint) -> uint;
 }
 
 
