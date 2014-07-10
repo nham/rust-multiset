@@ -2,7 +2,7 @@
 
 name = "rust-multiset"
 version = "0.1.0"
-authors = [ "nick@wabbo.org" ]
+authors = [ "Nick Hamann <nick@wabbo.org>" ]
 
 [[bin]]
 
