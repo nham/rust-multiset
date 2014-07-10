@@ -6,7 +6,7 @@ pub trait Multiset<T>: Collection {
     /// Return the number occurrences of the value in the multiset
     fn count(&self, value: &T) -> uint;
 
-    /// Return true if the set has no elements in common with `other`.
+    /// Return true if the multiset has no elements in common with `other`.
     fn is_disjoint(&self, other: &Self) -> bool;
 
     /// Return true if every element x contained in the multiset has a multiplicity 
