@@ -1,0 +1,10 @@
+[package]
+
+name = "rust-multiset"
+version = "0.1.0"
+authors = [ "nick@wabbo.org" ]
+
+[[bin]]
+
+name = "rust-multiset"
+

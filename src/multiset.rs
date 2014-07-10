@@ -1,6 +1,4 @@
-extern crate collections;
-
-use collections::treemap::{TreeMap, TreeSet, Entries};
+use super::{TreeMap, TreeSet, Entries};
 
 pub trait Multiset<T>: Collection {
     /// Return the number occurrences of the value in the multiset
@@ -187,5 +185,3 @@ impl<'a, T> Iterator<&'a T> for MultisetItems<'a, T> {
         self.current
     }
 }
-
-fn main() {}
