@@ -59,7 +59,6 @@ impl<T: Ord> Multiset<T> for TreeMultiset<T> {
     }
 
     fn is_disjoint(&self, other: &TreeMultiset<T>) -> bool {
-        // alternatively, we could convert each mset to a set and call is_disjoint()
         let mut x = self.iter();
         let mut y = other.iter();
         let mut a = x.next();
