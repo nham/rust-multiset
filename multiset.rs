@@ -18,11 +18,11 @@ pub trait Multiset<T>: Collection {
 pub trait MutableMultiset<T>: Multiset<T> + Mutable {
     /// Add `n` occurrences of `value` to the multiset. Return true if the value
     /// was not already present in the multiset.
-    fn insert(&mut self, value: T, n: occurrences) -> bool;
+    fn insert(&mut self, value: T, n: uint) -> bool;
 
     /// Remove `n` occurrences of `value` from the multiset. If there are less than
     /// `n` occurrences, remove all occurrences. Return the number of occurrences
     /// removed.
-    fn remove(&mut self, value: T, n: occurrences) -> uint;
+    fn remove(&mut self, value: T, n: uint) -> uint;
 
 }
