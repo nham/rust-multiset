@@ -7,4 +7,5 @@ authors = [ "nick@wabbo.org" ]
 [[bin]]
 
 name = "rust-multiset"
+path = "src/mod.rs"
 
