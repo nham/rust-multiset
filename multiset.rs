@@ -139,7 +139,7 @@ impl<T: Ord> MutableMultiset<T> for TreeMultiset<T> {
 impl<T: Ord> TreeMultiset<T> {
     /// Create an empty TreeMultiset
     #[inline]
-    fn new() -> TreeMultiset<T> { TreeMultiset {map: TreeMap::new()} }
+    pub fn new() -> TreeMultiset<T> { TreeMultiset {map: TreeMap::new()} }
 
     /// Get a lazy iterator over the values in the multiset.
     /// Requires that it be frozen (immutable).
@@ -150,7 +150,7 @@ impl<T: Ord> TreeMultiset<T> {
 }
 
 impl<T: Ord + Clone> TreeMultiset<T> {
-    fn to_set(&self) -> TreeSet<T> {
+    pub fn to_set(&self) -> TreeSet<T> {
         let mut set = TreeSet::new();
         for (k, _) in self.map.clone().move_iter() {
             set.insert(k);
