@@ -209,3 +209,94 @@ impl<'a, T> Iterator<&'a T> for MultisetItems<'a, T> {
         self.current
     }
 }
+
+
+mod test_mset {
+    use super::{TreeMultiset, Multiset, MutableMultiset};
+
+    #[test]
+    fn test_clear() {
+        let mut s = TreeMultiset::new();
+        s.clear();
+        assert!(s.insert_one(5i));
+        assert!(s.insert_one(12));
+        assert!(s.insert_one(19));
+        s.clear();
+        assert!(!s.contains(&5));
+        assert!(!s.contains(&12));
+        assert!(!s.contains(&19));
+        assert!(s.is_empty());
+    }
+
+    #[test]
+    fn test_disjoint() {
+        let mut xs = TreeMultiset::new();
+        let mut ys = TreeMultiset::new();
+        assert!(xs.is_disjoint(&ys));
+        assert!(ys.is_disjoint(&xs));
+        assert!(xs.insert_one(5i));
+        assert!(ys.insert_one(11i));
+        assert!(xs.is_disjoint(&ys));
+        assert!(ys.is_disjoint(&xs));
+        assert!(xs.insert_one(7));
+        assert!(xs.insert_one(19));
+        assert!(xs.insert_one(4));
+        assert!(ys.insert_one(2));
+        assert!(ys.insert_one(-11));
+        assert!(xs.is_disjoint(&ys));
+        assert!(ys.is_disjoint(&xs));
+        // at this point, xs = {5, 7, 19, 4}, ys = {11, 2, -11}
+        assert!(ys.insert_one(7));
+        assert!(!ys.is_disjoint(&xs));
+        assert!(!xs.is_disjoint(&ys));
+        assert!(!xs.insert_one(7));
+        assert!(!ys.is_disjoint(&xs));
+        assert!(!xs.is_disjoint(&ys));
+    }
+
+    #[test]
+    fn test_subset_and_superset() {
+        let mut a = TreeMultiset::new();
+        assert!(a.insert_one(0i));
+        assert!(a.insert_one(5));
+        assert!(a.insert_one(11));
+        assert!(a.insert_one(7));
+
+        let mut b = TreeMultiset::new();
+        assert!(b.insert_one(0i));
+        assert!(b.insert_one(7));
+        assert!(b.insert_one(19));
+        assert!(b.insert_one(250));
+        assert!(b.insert_one(11));
+        assert!(b.insert_one(200));
+
+        assert!(!a.is_subset(&b));
+        assert!(!a.is_superset(&b));
+        assert!(!b.is_subset(&a));
+        assert!(!b.is_superset(&a));
+
+        assert!(!a.insert_one(5));
+        assert!(b.insert_one(5));
+
+        assert!(!a.is_subset(&b));
+        assert!(!a.is_superset(&b));
+        assert!(!b.is_subset(&a));
+        assert!(!b.is_superset(&a));
+
+        assert!(!b.insert_one(5));
+
+        assert!(a.is_subset(&b));
+        assert!(!a.is_superset(&b));
+        assert!(!b.is_subset(&a));
+        assert!(b.is_superset(&a));
+
+        assert!(!b.insert_one(7));
+        assert!(!b.insert_one(7));
+
+        assert!(a.is_subset(&b));
+        assert!(!a.is_superset(&b));
+        assert!(!b.is_subset(&a));
+        assert!(b.is_superset(&a));
+    }
+
+}
