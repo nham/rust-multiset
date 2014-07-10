@@ -35,6 +35,12 @@ pub trait MutableMultiset<T>: Multiset<T> + Mutable {
     /// `n` occurrences, remove all occurrences. Return the number of occurrences
     /// removed.
     fn remove(&mut self, value: &T, n: uint) -> uint;
+
+    /// Add one occurrence of `value` to the multiset. Return true if the value
+    /// was not already present in the multiset.
+    fn insert_one(&mut self, value: T) -> bool {
+        self.insert(value, 1)
+    }
 }
 
 
