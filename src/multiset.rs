@@ -196,7 +196,7 @@ pub struct MultisetItems<'a, T> {
 impl<'a, T> Iterator<&'a T> for MultisetItems<'a, T> {
     #[inline]
     fn next(&mut self) -> Option<&'a T> {
-        if self.count == 0u {
+        if self.count == 0 {
             // Either we've exhausted the multiset or we just need to grab
             // the next entry from self.iter
             match self.iter.next() {
@@ -211,6 +211,7 @@ impl<'a, T> Iterator<&'a T> for MultisetItems<'a, T> {
         // Assume here that we will never have an entry with a count of zero.
         // This means we have to take care that when we remove the last occurrence 
         // from a multiset, we must delete the key also.
+        self.count -= 1;
         self.current
     }
 }
