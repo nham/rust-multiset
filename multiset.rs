@@ -1,6 +1,6 @@
 extern crate collections;
 
-use collections::treemap::{TreeMap, TreeSet};
+use collections::treemap::{TreeMap, TreeSet, Entries};
 
 pub trait Multiset<T>: Collection {
     /// Return the number occurrences of the value in the multiset
@@ -49,7 +49,57 @@ impl<T: Ord> Mutable for TreeMultiset<T> {
     fn clear(&mut self) { self.map.clear() }
 }
 
+impl<T: Ord> Multiset<T> for TreeMultiset<T> {
+    #[inline]
+    fn count(&self, value: &T) -> uint {
+        match self.map.find(value) {
+            None => 0u,
+            Some(count) => *count
+        }
+    }
 
+    fn is_disjoint(&self, other: &TreeMultiset<T>) -> bool {
+        false
+    }
+
+    fn is_subset(&self, other: &TreeMultiset<T>) -> bool {
+        let mut x = self.iter();
+        let mut y = other.iter();
+        let mut a = x.next();
+        let mut b = y.next();
+        while a.is_some() {
+            if b.is_none() {
+                return false;
+            }
+
+            let a1 = a.unwrap();
+            let b1 = b.unwrap();
+
+            match b1.cmp(a1) {
+                Less => (),
+                Greater => return false,
+                Equal => a = x.next(),
+            }
+
+            b = y.next();
+        }
+        true
+    }
+
+}
+
+impl<T: Ord> TreeMultiset<T> {
+    /// Create an empty TreeMultiset
+    #[inline]
+    fn new() -> TreeMultiset<T> { TreeMultiset {map: TreeMap::new()} }
+
+    /// Get a lazy iterator over the values in the multiset.
+    /// Requires that it be frozen (immutable).
+    #[inline]
+    pub fn iter<'a>(&'a self) -> MultisetItems<'a, T> {
+        MultisetItems{iter: self.map.iter(), current: None, count: 0 }
+    }
+}
 
 impl<T: Ord + Clone> TreeMultiset<T> {
     fn to_set(&self) -> TreeSet<T> {
@@ -58,6 +108,36 @@ impl<T: Ord + Clone> TreeMultiset<T> {
             set.insert(k);
         }
         set
+    }
+}
+
+
+/// Lazy forward iterator over a multiset
+pub struct MultisetItems<'a, T> {
+    iter: Entries<'a, T, uint>,
+    current: Option<&'a T>,
+    count: uint,
+}
+
+impl<'a, T> Iterator<&'a T> for MultisetItems<'a, T> {
+    #[inline]
+    fn next(&mut self) -> Option<&'a T> {
+        if self.count == 0u {
+            // Either we've exhausted the multiset or we just need to grab
+            // the next entry from self.iter
+            match self.iter.next() {
+                None => return None,
+                Some((val, count)) => {
+                    self.current = Some(val);
+                    self.count = *count;
+                }
+            }
+        }
+
+        // Assume here that we will never have an entry with a count of zero.
+        // This means we have to take care that when we remove the last occurrence 
+        // from a multiset, we must delete the key also.
+        self.current
     }
 }
 
