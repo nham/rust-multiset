@@ -1,3 +1,7 @@
+extern crate collections;
+
+use collections::treemap::{TreeMap, TreeSet};
+
 pub trait Multiset<T>: Collection {
     /// Return the number occurrences of the value in the multiset
     fn count(&self, value: &T) -> uint;
@@ -24,5 +28,33 @@ pub trait MutableMultiset<T>: Multiset<T> + Mutable {
     /// `n` occurrences, remove all occurrences. Return the number of occurrences
     /// removed.
     fn remove(&mut self, value: T, n: uint) -> uint;
-
 }
+
+
+pub struct TreeMultiset<T> {
+    map: TreeMap<T,uint>,
+}
+
+impl<T: Ord> Collection for TreeMultiset<T> {
+    #[inline]
+    fn len(&self) -> uint { self.map.len() }
+}
+
+impl<T: Ord> Mutable for TreeMultiset<T> {
+    #[inline]
+    fn clear(&mut self) { self.map.clear() }
+}
+
+
+
+impl<T: Ord + Clone> TreeMultiset<T> {
+    fn to_set(&self) -> TreeSet<T> {
+        let mut set = TreeSet::new();
+        for (k, _) in self.map.clone().move_iter() {
+            set.insert(k);
+        }
+        set
+    }
+}
+
+fn main() {}
