@@ -90,21 +90,15 @@ impl<T: Ord> Multiset<T> for TreeMultiset<T> {
         let mut y = other.iter();
         let mut a = x.next();
         let mut b = y.next();
-        while a.is_some() {
-            if b.is_none() {
-                return true;
-            }
-
+        while a.is_some() && b.is_some() {
             let a1 = a.unwrap();
             let b1 = b.unwrap();
 
-            match b1.cmp(a1) {
-                Less => (),
-                Greater => a = x.next(),
+            match a1.cmp(b1) {
+                Less => a = x.next(),
+                Greater => b = y.next(),
                 Equal => return false,
             }
-
-            b = y.next();
         }
         true
     }
