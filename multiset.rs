@@ -109,6 +109,33 @@ impl<T: Ord> Multiset<T> for TreeMultiset<T> {
 
 }
 
+
+impl<T: Ord> MutableMultiset<T> for TreeMultiset<T> {
+    fn insert(&mut self, value: T, n: uint) -> bool {
+        let curr = self.count(&value);
+        self.map.insert(value, curr + n)
+    }
+
+    fn remove(&mut self, value: &T, n: uint) -> uint {
+        let curr = self.count(value);
+
+        if n >= curr {
+            self.map.remove(value);
+            curr
+        } else {
+            match self.map.find_mut(value) {
+                None => 0u,
+                Some(mult) => {
+                    *mult = curr - n;
+                    n
+                }
+            }
+        }
+    }
+
+}
+
+
 impl<T: Ord> TreeMultiset<T> {
     /// Create an empty TreeMultiset
     #[inline]
