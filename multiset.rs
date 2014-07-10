@@ -59,7 +59,28 @@ impl<T: Ord> Multiset<T> for TreeMultiset<T> {
     }
 
     fn is_disjoint(&self, other: &TreeMultiset<T>) -> bool {
-        false
+        // alternatively, we could convert each mset to a set and call is_disjoint()
+        let mut x = self.iter();
+        let mut y = other.iter();
+        let mut a = x.next();
+        let mut b = y.next();
+        while a.is_some() {
+            if b.is_none() {
+                return true;
+            }
+
+            let a1 = a.unwrap();
+            let b1 = b.unwrap();
+
+            match b1.cmp(a1) {
+                Less => (),
+                Greater => a = x.next(),
+                Equal => return false,
+            }
+
+            b = y.next();
+        }
+        true
     }
 
     fn is_subset(&self, other: &TreeMultiset<T>) -> bool {
