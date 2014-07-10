@@ -16,6 +16,11 @@ pub trait Multiset<T>: Collection {
         self.count(value) > 0u
     }
 
+    /// Return true if the multiset is a superset of another
+    fn is_superset(&self, other: &Self) -> bool {
+        other.is_subset(self)
+    }
+
     // FIXME: Ideally we would have a method to return the underlying set
     // of a multiset. However, currently there's no way to have a trait method 
     // return a trait. We need something like associated type synonyms (see #5033)
