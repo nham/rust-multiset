@@ -43,9 +43,24 @@ pub trait MutableMultiset<T>: Multiset<T> + Mutable {
     }
 }
 
-
+/// A implementation of the `Multiset` trait on top of the `TreeMap` container. The
+/// only requirement is that the type of the elements contained ascribes to the
+/// `Ord` trait.
+#[deriving(Clone)]
 pub struct TreeMultiset<T> {
     map: TreeMap<T,uint>,
+}
+
+impl<T: PartialEq + Ord> PartialEq for TreeMultiset<T> {
+    #[inline]
+    fn eq(&self, other: &TreeMultiset<T>) -> bool { self.map == other.map }
+}
+
+impl<T: Ord> PartialOrd for TreeMultiset<T> {
+    #[inline]
+    fn partial_cmp(&self, other: &TreeMultiset<T>) -> Option<Ordering> {
+        self.map.partial_cmp(&other.map)
+    }
 }
 
 impl<T: Ord> Collection for TreeMultiset<T> {
@@ -364,5 +379,15 @@ mod test_mset {
         for (x, y) in m.rev_iter().zip(v.iter()) {
             assert_eq!(*x, *y);
         }
+    }
+
+    #[test]
+    fn test_clone_eq() {
+      let mut m = TreeMultiset::new();
+
+      m.insert_one(1i);
+      m.insert_one(2);
+
+      assert!(m.clone() == m);
     }
 }
