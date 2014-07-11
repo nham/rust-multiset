@@ -4,22 +4,22 @@ use super::{TreeMap, TreeSet, Entries, RevEntries};
 /// appear multiple times. This trait represents actions which can be performed
 /// on multisets to iterate over them.
 pub trait Multiset<T>: Collection {
-    /// Return the number occurrences of the value in the multiset
+    /// Return the number of occurrences of the value in the multiset.
     fn count(&self, value: &T) -> uint;
 
     /// Return true if the multiset has no elements in common with `other`.
     fn is_disjoint(&self, other: &Self) -> bool;
 
-    /// Return true if for any given element, the number times it occurs in the
-    /// multiset is not greater than the number of times it occurs in `other
+    /// Return true if, for any given element, the number times it occurs in the
+    /// multiset is not greater than the number of times it occurs in `other`.
     fn is_subset(&self, other: &Self) -> bool;
 
-    /// Return true if the value occurs at least once in the multiset
+    /// Return true if the value occurs at least once in the multiset.
     fn contains(&self, value: &T) -> bool {
         self.count(value) > 0u
     }
 
-    /// Return true if the multiset is a superset of another
+    /// Return true if the multiset is a superset of another.
     fn is_superset(&self, other: &Self) -> bool {
         other.is_subset(self)
     }
