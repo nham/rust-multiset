@@ -58,7 +58,6 @@ impl<T: Ord> Mutable for TreeMultiset<T> {
     fn clear(&mut self) { self.map.clear() }
 }
 
-
 impl<T: Ord> Extendable<T> for TreeMultiset<T> {
     #[inline]
     fn extend<Iter: Iterator<T>>(&mut self, mut iter: Iter) {
@@ -129,7 +128,6 @@ impl<T: Ord> Multiset<T> for TreeMultiset<T> {
 
 }
 
-
 impl<T: Ord> MutableMultiset<T> for TreeMultiset<T> {
     fn insert(&mut self, value: T, n: uint) -> bool {
         let curr = self.count(&value);
@@ -155,7 +153,6 @@ impl<T: Ord> MutableMultiset<T> for TreeMultiset<T> {
 
 }
 
-
 impl<T: Ord> TreeMultiset<T> {
     /// Create an empty TreeMultiset
     #[inline]
@@ -178,7 +175,6 @@ impl<T: Ord + Clone> TreeMultiset<T> {
         set
     }
 }
-
 
 /// Lazy forward iterator over a multiset
 pub struct MultisetItems<'a, T> {
