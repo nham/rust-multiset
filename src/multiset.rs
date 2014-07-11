@@ -1,4 +1,4 @@
-use super::{TreeMap, TreeSet, Entries};
+use super::{TreeMap, TreeSet, Entries, RevEntries};
 
 pub trait Multiset<T>: Collection {
     /// Return the number occurrences of the value in the multiset
@@ -169,7 +169,7 @@ impl<T: Ord> TreeMultiset<T> {
     /// Requires that it be frozen (immutable).
     #[inline]
     pub fn rev_iter<'a>(&'a self) -> RevMultisetItems<'a, T> {
-        RevMultisetItems{iter: self.map.rev_iter()}
+        RevMultisetItems{iter: self.map.rev_iter(), current: None, count: 0}
     }
 }
 
@@ -192,7 +192,7 @@ pub struct MultisetItems<'a, T> {
 
 /// Lazy backward iterator over a multiset
 pub struct RevMultisetItems<'a, T> {
-    iter: RevEntries<'a, T, ()>
+    iter: RevEntries<'a, T, uint>,
     current: Option<&'a T>,
     count: uint,
 }
@@ -219,7 +219,6 @@ impl<'a, T> Iterator<&'a T> for MultisetItems<'a, T> {
         self.current
     }
 }
-
 
 impl<'a, T> Iterator<&'a T> for RevMultisetItems<'a, T> {
     #[inline]
@@ -278,7 +277,6 @@ mod test_mset {
         assert!(ys.insert_one(-11));
         assert!(xs.is_disjoint(&ys));
         assert!(ys.is_disjoint(&xs));
-        // at this point, xs = {5, 7, 19, 4}, ys = {11, 2, -11}
         assert!(ys.insert_one(7));
         assert!(!ys.is_disjoint(&xs));
         assert!(!xs.is_disjoint(&ys));
@@ -332,4 +330,39 @@ mod test_mset {
         assert!(b.is_superset(&a));
     }
 
+    #[test]
+    fn test_iterator() {
+        let mut m = TreeMultiset::new();
+
+        assert!(m.insert_one(3i));
+        assert!(m.insert_one(2));
+        assert!(m.insert_one(0));
+        assert!(m.insert_one(-2));
+        assert!(m.insert_one(4));
+        assert!(!m.insert_one(2));
+        assert!(m.insert_one(1));
+
+        let v = vec!(-2i, 0, 1, 2, 2, 3, 4);
+        for (x, y) in m.iter().zip(v.iter()) {
+            assert_eq!(*x, *y);
+        }
+    }
+
+    #[test]
+    fn test_rev_iter() {
+        let mut m = TreeMultiset::new();
+
+        assert!(m.insert_one(3i));
+        assert!(m.insert_one(2));
+        assert!(m.insert_one(0));
+        assert!(m.insert_one(-2));
+        assert!(m.insert_one(4));
+        assert!(!m.insert_one(2));
+        assert!(m.insert_one(1));
+
+        let v = vec!(4i, 3, 2, 2, 1, 0, -2);
+        for (x, y) in m.rev_iter().zip(v.iter()) {
+            assert_eq!(*x, *y);
+        }
+    }
 }
