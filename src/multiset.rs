@@ -164,6 +164,13 @@ impl<T: Ord> TreeMultiset<T> {
     pub fn iter<'a>(&'a self) -> MultisetItems<'a, T> {
         MultisetItems{iter: self.map.iter(), current: None, count: 0 }
     }
+
+    /// Get a lazy iterator over the values in the multiset.
+    /// Requires that it be frozen (immutable).
+    #[inline]
+    pub fn rev_iter<'a>(&'a self) -> RevMultisetItems<'a, T> {
+        RevMultisetItems{iter: self.map.rev_iter()}
+    }
 }
 
 impl<T: Ord + Clone> TreeMultiset<T> {
@@ -179,6 +186,13 @@ impl<T: Ord + Clone> TreeMultiset<T> {
 /// Lazy forward iterator over a multiset
 pub struct MultisetItems<'a, T> {
     iter: Entries<'a, T, uint>,
+    current: Option<&'a T>,
+    count: uint,
+}
+
+/// Lazy backward iterator over a multiset
+pub struct RevMultisetItems<'a, T> {
+    iter: RevEntries<'a, T, ()>
     current: Option<&'a T>,
     count: uint,
 }
@@ -199,13 +213,36 @@ impl<'a, T> Iterator<&'a T> for MultisetItems<'a, T> {
         }
 
         // Assume here that we will never have an entry with a count of zero.
-        // This means we have to take care that when we remove the last occurrence 
+        // This means we have to take care that when we remove the last occurrence
         // from a multiset, we must delete the key also.
         self.count -= 1;
         self.current
     }
 }
 
+
+impl<'a, T> Iterator<&'a T> for RevMultisetItems<'a, T> {
+    #[inline]
+    fn next(&mut self) -> Option<&'a T> {
+        if self.count == 0 {
+            // Either we've exhausted the multiset or we just need to grab
+            // the next entry from self.iter
+            match self.iter.next() {
+                None => return None,
+                Some((val, count)) => {
+                    self.current = Some(val);
+                    self.count = *count;
+                }
+            }
+        }
+
+        // Assume here that we will never have an entry with a count of zero.
+        // This means we have to take care that when we remove the last occurrence
+        // from a multiset, we must delete the key also.
+        self.count -= 1;
+        self.current
+    }
+}
 
 mod test_mset {
     use super::{TreeMultiset, Multiset, MutableMultiset};
