@@ -1,4 +1,4 @@
-use super::{TreeMap, TreeSet, Entries, RevEntries};
+use super::{TreeMap, TreeSet, Entries, RevEntries, Peekable};
 
 /// A multiset is an unordered collection of objects in which each object can
 /// appear multiple times. This trait represents actions which can be performed
@@ -191,6 +191,30 @@ impl<T: Ord> TreeMultiset<T> {
     pub fn rev_iter<'a>(&'a self) -> RevMultisetItems<'a, T> {
         RevMultisetItems{iter: self.map.rev_iter(), current: None, count: 0}
     }
+
+    /// Visit the values (in-order) representing the difference
+    pub fn difference<'a>(&'a self, other: &'a TreeMultiset<T>) 
+        -> DifferenceItems<'a, T, MultisetItems<'a, T>> {
+        DifferenceItems{a: self.iter().peekable(), b: other.iter().peekable()}
+    }
+
+    /// Visit the values (in-order) representing the symmetric difference
+    pub fn symmetric_difference<'a>(&'a self, other: &'a TreeMultiset<T>)
+        -> SymDifferenceItems<'a, T, MultisetItems<'a, T>> {
+        SymDifferenceItems{a: self.iter().peekable(), b: other.iter().peekable()}
+    }
+
+    /// Visit the values (in-order) representing the intersection
+    pub fn intersection<'a>(&'a self, other: &'a TreeMultiset<T>)
+        -> IntersectionItems<'a, T, MultisetItems<'a, T>> {
+        IntersectionItems{a: self.iter().peekable(), b: other.iter().peekable()}
+    }
+
+    /// Visit the values (in-order) representing the union
+    pub fn union<'a>(&'a self, other: &'a TreeMultiset<T>) 
+        -> UnionItems<'a, T, MultisetItems<'a, T>> {
+        UnionItems{a: self.iter().peekable(), b: other.iter().peekable()}
+    }
 }
 
 impl<T: Ord + Clone> TreeMultiset<T> {
@@ -215,6 +239,30 @@ pub struct RevMultisetItems<'a, T> {
     iter: RevEntries<'a, T, uint>,
     current: Option<&'a T>,
     count: uint,
+}
+
+/// Lazy iterator producing elements in the set difference (in-order)
+pub struct DifferenceItems<'a, T, I> {
+    a: Peekable<&'a T, I>,
+    b: Peekable<&'a T, I>,
+}
+
+/// Lazy iterator producing elements in the set symmetric difference (in-order)
+pub struct SymDifferenceItems<'a, T, I> {
+    a: Peekable<&'a T, I>,
+    b: Peekable<&'a T, I>,
+}
+
+/// Lazy iterator producing elements in the set intersection (in-order)
+pub struct IntersectionItems<'a, T, I> {
+    a: Peekable<&'a T, I>,
+    b: Peekable<&'a T, I>,
+}
+
+/// Lazy iterator producing elements in the set union (in-order)
+pub struct UnionItems<'a, T, I> {
+    a: Peekable<&'a T, I>,
+    b: Peekable<&'a T, I>,
 }
 
 impl<'a, T> Iterator<&'a T> for MultisetItems<'a, T> {
@@ -260,6 +308,70 @@ impl<'a, T> Iterator<&'a T> for RevMultisetItems<'a, T> {
         // from a multiset, we must delete the key also.
         self.count -= 1;
         self.current
+    }
+}
+
+/// Compare `x` and `y`, but return `short` if x is None and `long` if y is None
+fn cmp_opt<T: Ord>(x: Option<&T>, y: Option<&T>,
+                        short: Ordering, long: Ordering) -> Ordering {
+    match (x, y) {
+        (None    , _       ) => short,
+        (_       , None    ) => long,
+        (Some(x1), Some(y1)) => x1.cmp(y1),
+    }
+}
+
+impl<'a, T: Ord, I: Iterator<&'a T>> Iterator<&'a T> for DifferenceItems<'a, T, I> {
+    fn next(&mut self) -> Option<&'a T> {
+        loop {
+            match cmp_opt(self.a.peek(), self.b.peek(), Less, Less) {
+                Less    => return self.a.next(),
+                Equal   => { self.a.next(); self.b.next(); }
+                Greater => { self.b.next(); }
+            }
+        }
+    }
+}
+
+impl<'a, T: Ord, I: Iterator<&'a T>> Iterator<&'a T> for SymDifferenceItems<'a, T, I> {
+    fn next(&mut self) -> Option<&'a T> {
+        loop {
+            match cmp_opt(self.a.peek(), self.b.peek(), Greater, Less) {
+                Less    => return self.a.next(),
+                Equal   => { self.a.next(); self.b.next(); }
+                Greater => return self.b.next(),
+            }
+        }
+    }
+}
+
+impl<'a, T: Ord, I: Iterator<&'a T>> Iterator<&'a T> for IntersectionItems<'a, T, I> {
+    fn next(&mut self) -> Option<&'a T> {
+        loop {
+            let o_cmp = match (self.a.peek(), self.b.peek()) {
+                (None    , _       ) => None,
+                (_       , None    ) => None,
+                (Some(a1), Some(b1)) => Some(a1.cmp(b1)),
+            };
+            match o_cmp {
+                None          => return None,
+                Some(Less)    => { self.a.next(); }
+                Some(Equal)   => { self.b.next(); return self.a.next() }
+                Some(Greater) => { self.b.next(); }
+            }
+        }
+    }
+}
+
+impl<'a, T: Ord, I: Iterator<&'a T>> Iterator<&'a T> for UnionItems<'a, T, I> {
+    fn next(&mut self) -> Option<&'a T> {
+        loop {
+            match cmp_opt(self.a.peek(), self.b.peek(), Greater, Less) {
+                Less    => return self.a.next(),
+                Equal   => { self.b.next(); return self.a.next() }
+                Greater => return self.b.next(),
+            }
+        }
     }
 }
 
@@ -394,5 +506,87 @@ mod test_mset {
       m.insert_one(2);
 
       assert!(m.clone() == m);
+    }
+
+    fn check(a: &[int],
+             b: &[int],
+             expected: &[int],
+             f: |&TreeMultiset<int>, &TreeMultiset<int>, f: |&int| -> bool| -> bool) {
+        let mut set_a = TreeMultiset::new();
+        let mut set_b = TreeMultiset::new();
+
+        for x in a.iter() { assert!(set_a.insert_one(*x)) }
+        for y in b.iter() { assert!(set_b.insert_one(*y)) }
+
+        let mut i = 0;
+        f(&set_a, &set_b, |x| {
+            assert_eq!(*x, expected[i]);
+            i += 1;
+            true
+        });
+        assert_eq!(i, expected.len());
+    }
+
+    #[test]
+    fn test_intersection() {
+        fn check_intersection(a: &[int], b: &[int], expected: &[int]) {
+            check(a, b, expected, |x, y, f| x.intersection(y).all(f))
+        }
+
+        check_intersection([], [], []);
+        check_intersection([1, 2, 3], [], []);
+        check_intersection([], [1, 2, 3], []);
+        check_intersection([2], [1, 2, 3], [2]);
+        check_intersection([1, 2, 3], [2], [2]);
+        check_intersection([11, 1, 3, 77, 103, 5, -5],
+                           [2, 11, 77, -9, -42, 5, 3],
+                           [3, 5, 11, 77]);
+    }
+
+    #[test]
+    fn test_difference() {
+        fn check_difference(a: &[int], b: &[int], expected: &[int]) {
+            check(a, b, expected, |x, y, f| x.difference(y).all(f))
+        }
+
+        check_difference([], [], []);
+        check_difference([1, 12], [], [1, 12]);
+        check_difference([], [1, 2, 3, 9], []);
+        check_difference([1, 3, 5, 9, 11],
+                         [3, 9],
+                         [1, 5, 11]);
+        check_difference([-5, 11, 22, 33, 40, 42],
+                         [-12, -5, 14, 23, 34, 38, 39, 50],
+                         [11, 22, 33, 40, 42]);
+    }
+
+    #[test]
+    fn test_symmetric_difference() {
+        fn check_symmetric_difference(a: &[int], b: &[int],
+                                      expected: &[int]) {
+            check(a, b, expected, |x, y, f| x.symmetric_difference(y).all(f))
+        }
+
+        check_symmetric_difference([], [], []);
+        check_symmetric_difference([1, 2, 3], [2], [1, 3]);
+        check_symmetric_difference([2], [1, 2, 3], [1, 3]);
+        check_symmetric_difference([1, 3, 5, 9, 11],
+                                   [-2, 3, 9, 14, 22],
+                                   [-2, 1, 5, 11, 14, 22]);
+    }
+
+    #[test]
+    fn test_union() {
+        fn check_union(a: &[int], b: &[int],
+                                      expected: &[int]) {
+            check(a, b, expected, |x, y, f| x.union(y).all(f))
+        }
+
+        check_union([], [], []);
+        check_union([1, 2, 3], [2], [1, 2, 3]);
+        check_union([2], [1, 2, 3], [1, 2, 3]);
+        check_union([1, 3, 5, 9, 11, 16, 19, 24],
+                    [-2, 1, 5, 9, 13, 19],
+                    [-2, 1, 3, 5, 9, 11, 13, 16, 19, 24]);
     }
 }
