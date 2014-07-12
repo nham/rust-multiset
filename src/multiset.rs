@@ -46,6 +46,12 @@ pub trait MutableMultiset<T>: Multiset<T> + Mutable {
     fn insert_one(&mut self, value: T) -> bool {
         self.insert(value, 1)
     }
+
+    /// Remove one occurrence of `value` from the multiset. Return true if the
+    /// value was present in the multiset.
+    fn remove_one(&mut self, value: &T) -> bool {
+        self.remove(value, 1) > 0u
+    }
 }
 
 /// A implementation of the `Multiset` trait on top of the `TreeMap` container.
