@@ -409,6 +409,25 @@ mod test_mset {
     }
 
     #[test]
+    fn test_count() {
+        let mut m = TreeMultiset::new();
+        assert!(m.insert_one(1i));
+        assert!(m.count(&1) == 1);
+        assert!(!m.insert_one(1i));
+        assert!(m.count(&1) == 2);
+
+        assert!(m.count(&2) == 0);
+        assert!(m.insert(2i, 4));
+        assert!(m.count(&2) == 4);
+        assert!(m.remove(&2, 3) == 3);
+        assert!(m.count(&2) == 1);
+        assert!(m.remove_one(&2));
+        assert!(m.count(&2) == 0);
+        assert!(!m.remove_one(&2));
+        assert!(m.count(&2) == 0);
+    }
+
+    #[test]
     fn test_disjoint() {
         let mut xs = TreeMultiset::new();
         let mut ys = TreeMultiset::new();
