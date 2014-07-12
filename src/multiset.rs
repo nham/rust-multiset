@@ -1,4 +1,7 @@
 use super::{TreeMap, TreeSet, Entries, RevEntries, Peekable};
+use std::fmt;
+use std::fmt::Show;
+use std::default::Default;
 use std::hash;
 
 /// A multiset is an unordered collection of objects in which each object can
@@ -80,6 +83,19 @@ impl<S: hash::Writer, T: Ord + hash::Hash<S>> hash::Hash<S> for TreeMultiset<T> 
         for elt in self.iter() {
             elt.hash(state);
         }
+    }
+}
+
+impl<T: Ord + Show> Show for TreeMultiset<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        try!(write!(f, "{{"));
+
+        for (i, x) in self.iter().enumerate() {
+            if i != 0 { try!(write!(f, ", ")); }
+            try!(write!(f, "{}", *x));
+        }
+
+        write!(f, "}}")
     }
 }
 
@@ -186,6 +202,11 @@ impl<T: Ord> MutableMultiset<T> for TreeMultiset<T> {
         }
     }
 
+}
+
+impl<T: Ord> Default for TreeMultiset<T> {
+    #[inline]
+    fn default() -> TreeMultiset<T> { TreeMultiset::new() }
 }
 
 impl<T: Ord> TreeMultiset<T> {
@@ -641,5 +662,19 @@ mod test_mset {
         check_union([1, 3, 5, 9, 11, 16, 19, 24],
                     [-2, 1, 5, 9, 13, 19],
                     [-2, 1, 3, 5, 9, 11, 13, 16, 19, 24]);
+    }
+
+    #[test]
+    fn test_show() {
+        let mut set: TreeMultiset<int> = TreeMultiset::new();
+        let empty: TreeMultiset<int> = TreeMultiset::new();
+
+        set.insert_one(1);
+        set.insert(2, 3);
+
+        let set_str = format!("{}", set);
+
+        assert!(set_str == "{1, 2, 2, 2}".to_string());
+        assert_eq!(format!("{}", empty), "{}".to_string());
     }
 }
