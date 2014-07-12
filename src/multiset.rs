@@ -515,8 +515,8 @@ mod test_mset {
         let mut set_a = TreeMultiset::new();
         let mut set_b = TreeMultiset::new();
 
-        for x in a.iter() { assert!(set_a.insert_one(*x)) }
-        for y in b.iter() { assert!(set_b.insert_one(*y)) }
+        for x in a.iter() { set_a.insert_one(*x); }
+        for y in b.iter() { set_b.insert_one(*y); }
 
         let mut i = 0;
         f(&set_a, &set_b, |x| {
@@ -534,13 +534,14 @@ mod test_mset {
         }
 
         check_intersection([], [], []);
-        check_intersection([1, 2, 3], [], []);
-        check_intersection([], [1, 2, 3], []);
+        check_intersection([1, 2, 3, 2], [], []);
+        check_intersection([], [1, 2, 3, 2], []);
         check_intersection([2], [1, 2, 3], [2]);
-        check_intersection([1, 2, 3], [2], [2]);
-        check_intersection([11, 1, 3, 77, 103, 5, -5],
-                           [2, 11, 77, -9, -42, 5, 3],
-                           [3, 5, 11, 77]);
+        check_intersection([2, 2], [1, 2, 3, 2], [2, 2]);
+        check_intersection([1, 2, 3, 2], [2, 2], [2, 2]);
+        check_intersection([11, 5, 5, 1, 3, 77, 103, 5, -5, 1, 1, 77],
+                           [2, 11, 77, -9, -42, 5, 3, 77, 2, 5],
+                           [3, 5, 5, 11, 77, 77]);
     }
 
     #[test]
@@ -551,10 +552,11 @@ mod test_mset {
 
         check_difference([], [], []);
         check_difference([1, 12], [], [1, 12]);
-        check_difference([], [1, 2, 3, 9], []);
-        check_difference([1, 3, 5, 9, 11],
-                         [3, 9],
-                         [1, 5, 11]);
+        check_difference([1, 12, 1], [], [1, 1, 12]);
+        check_difference([], [1, 2, 2, 3, 9], []);
+        check_difference([1, 3, 3, 3, 5, 9, 11],
+                         [3, 9, 3],
+                         [1, 3, 5, 11]);
         check_difference([-5, 11, 22, 33, 40, 42],
                          [-12, -5, 14, 23, 34, 38, 39, 50],
                          [11, 22, 33, 40, 42]);
@@ -568,8 +570,8 @@ mod test_mset {
         }
 
         check_symmetric_difference([], [], []);
-        check_symmetric_difference([1, 2, 3], [2], [1, 3]);
-        check_symmetric_difference([2], [1, 2, 3], [1, 3]);
+        check_symmetric_difference([1, 1, 2, 3], [2], [1, 1, 3]);
+        check_symmetric_difference([2, 2], [1, 2, 2, 3], [1, 3]);
         check_symmetric_difference([1, 3, 5, 9, 11],
                                    [-2, 3, 9, 14, 22],
                                    [-2, 1, 5, 11, 14, 22]);
@@ -583,8 +585,8 @@ mod test_mset {
         }
 
         check_union([], [], []);
-        check_union([1, 2, 3], [2], [1, 2, 3]);
-        check_union([2], [1, 2, 3], [1, 2, 3]);
+        check_union([1, 2, 2, 3], [2], [1, 2, 2, 3]);
+        check_union([2, 2, 2], [1, 2, 2, 3], [1, 2, 2, 2, 3]);
         check_union([1, 3, 5, 9, 11, 16, 19, 24],
                     [-2, 1, 5, 9, 13, 19],
                     [-2, 1, 3, 5, 9, 11, 13, 16, 19, 24]);
