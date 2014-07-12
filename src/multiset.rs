@@ -1,4 +1,5 @@
 use super::{TreeMap, TreeSet, Entries, RevEntries, Peekable};
+use std::hash;
 
 /// A multiset is an unordered collection of objects in which each object can
 /// appear multiple times. This trait represents actions which can be performed
@@ -71,6 +72,14 @@ impl<T: Ord> PartialOrd for TreeMultiset<T> {
     #[inline]
     fn partial_cmp(&self, other: &TreeMultiset<T>) -> Option<Ordering> {
         self.map.partial_cmp(&other.map)
+    }
+}
+
+impl<S: hash::Writer, T: Ord + hash::Hash<S>> hash::Hash<S> for TreeMultiset<T> {
+    fn hash(&self, state: &mut S) {
+        for elt in self.iter() {
+            elt.hash(state);
+        }
     }
 }
 
@@ -383,6 +392,7 @@ impl<'a, T: Ord, I: Iterator<&'a T>> Iterator<&'a T> for UnionItems<'a, T, I> {
 
 mod test_mset {
     use super::{TreeMultiset, Multiset, MutableMultiset};
+    use std::hash;
 
     #[test]
     fn test_clear() {
@@ -512,6 +522,22 @@ mod test_mset {
       m.insert_one(2);
 
       assert!(m.clone() == m);
+    }
+
+    #[test]
+    fn test_hash() {
+      let mut x = TreeMultiset::new();
+      let mut y = TreeMultiset::new();
+
+      x.insert_one(1i);
+      x.insert_one(2);
+      x.insert_one(3);
+
+      y.insert_one(3i);
+      y.insert_one(2);
+      y.insert_one(1);
+
+      assert!(hash::hash(&x) == hash::hash(&y));
     }
 
     fn check(a: &[int],
