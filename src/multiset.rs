@@ -304,7 +304,7 @@ pub struct SymDifferenceItems<'a, T, I> {
     b: Peekable<&'a T, I>,
 }
 
-/// Lazy iterator producing elements in the set difference (in-order)
+/// Lazy iterator producing elements in the multiset sum (in-order)
 pub struct SumItems<'a, T, I> {
     a: Peekable<&'a T, I>,
     b: Peekable<&'a T, I>,
