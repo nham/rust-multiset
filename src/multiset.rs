@@ -4,60 +4,6 @@ use std::fmt::Show;
 use std::default::Default;
 use std::hash;
 
-/// A multiset is an unordered collection of objects in which each object can
-/// appear multiple times. This trait represents actions which can be performed
-/// on multisets to iterate over them.
-pub trait Multiset<T>: Collection {
-    /// Return the number of occurrences of the value in the multiset.
-    fn count(&self, value: &T) -> uint;
-
-    /// Return true if the multiset has no elements in common with `other`.
-    fn is_disjoint(&self, other: &Self) -> bool;
-
-    /// Return true if, for any given element, the number times it occurs in the
-    /// multiset is not greater than the number of times it occurs in `other`.
-    fn is_subset(&self, other: &Self) -> bool;
-
-    /// Return true if the value occurs at least once in the multiset.
-    fn contains(&self, value: &T) -> bool {
-        self.count(value) > 0u
-    }
-
-    /// Return true if the multiset is a superset of another.
-    fn is_superset(&self, other: &Self) -> bool {
-        other.is_subset(self)
-    }
-
-    // FIXME: Ideally we would have a method to return the underlying set
-    // of a multiset. However, currently there's no way to have a trait method
-    // return a trait. We need something like associated type synonyms (see #5033)
-}
-
-/// This trait represents actions which can be performed on multisets to mutate
-/// them.
-pub trait MutableMultiset<T>: Multiset<T> + Mutable {
-    /// Add `n` occurrences of `value` to the multiset. Return true if the value
-    /// was not already present in the multiset.
-    fn insert_many(&mut self, value: T, n: uint) -> bool;
-
-    /// Remove `n` occurrences of `value` from the multiset. If there are less
-    /// than `n` occurrences, remove all occurrences. Return the number of
-    /// occurrences removed.
-    fn remove_many(&mut self, value: &T, n: uint) -> uint;
-
-    /// Add one occurrence of `value` to the multiset. Return true if the value
-    /// was not already present in the multiset.
-    fn insert(&mut self, value: T) -> bool {
-        self.insert_many(value, 1)
-    }
-
-    /// Remove one occurrence of `value` from the multiset. Return true if the
-    /// value was present in the multiset.
-    fn remove(&mut self, value: &T) -> bool {
-        self.remove_many(value, 1) > 0u
-    }
-}
-
 /// A implementation of the `Multiset` trait on top of the `TreeMap` container.
 /// The only requirement is that the type of the elements contained ascribes to
 /// the `Ord` trait.
@@ -130,86 +76,6 @@ impl<T: Ord> FromIterator<T> for TreeMultiset<T> {
     }
 }
 
-impl<T: Ord> Multiset<T> for TreeMultiset<T> {
-    #[inline]
-    fn count(&self, value: &T) -> uint {
-        match self.map.find(value) {
-            None => 0u,
-            Some(count) => *count
-        }
-    }
-
-    fn is_disjoint(&self, other: &TreeMultiset<T>) -> bool {
-        let mut x = self.iter();
-        let mut y = other.iter();
-        let mut a = x.next();
-        let mut b = y.next();
-        while a.is_some() && b.is_some() {
-            let a1 = a.unwrap();
-            let b1 = b.unwrap();
-
-            match a1.cmp(b1) {
-                Less => a = x.next(),
-                Greater => b = y.next(),
-                Equal => return false,
-            }
-        }
-        true
-    }
-
-    fn is_subset(&self, other: &TreeMultiset<T>) -> bool {
-        let mut x = self.iter();
-        let mut y = other.iter();
-        let mut a = x.next();
-        let mut b = y.next();
-        while a.is_some() {
-            if b.is_none() {
-                return false;
-            }
-
-            let a1 = a.unwrap();
-            let b1 = b.unwrap();
-
-            match b1.cmp(a1) {
-                Less => (),
-                Greater => return false,
-                Equal => a = x.next(),
-            }
-
-            b = y.next();
-        }
-        true
-    }
-
-}
-
-impl<T: Ord> MutableMultiset<T> for TreeMultiset<T> {
-    fn insert_many(&mut self, value: T, n: uint) -> bool {
-        let curr = self.count(&value);
-        self.length += n;
-        self.map.insert(value, curr + n)
-    }
-
-    fn remove_many(&mut self, value: &T, n: uint) -> uint {
-        let curr = self.count(value);
-
-        if n >= curr {
-            self.map.remove(value);
-            self.length -= curr;
-            curr
-        } else {
-            match self.map.find_mut(value) {
-                None => 0u,
-                Some(mult) => {
-                    self.length -= n;
-                    *mult = curr - n;
-                    n
-                }
-            }
-        }
-    }
-}
-
 impl<T: Ord> Default for TreeMultiset<T> {
     #[inline]
     fn default() -> TreeMultiset<T> { TreeMultiset::new() }
@@ -265,6 +131,112 @@ impl<T: Ord> TreeMultiset<T> {
     pub fn union<'a>(&'a self, other: &'a TreeMultiset<T>) 
         -> UnionItems<'a, T, MultisetItems<'a, T>> {
         UnionItems{a: self.iter().peekable(), b: other.iter().peekable()}
+    }
+
+    /// Return the number of occurrences of the value in the multiset.
+    #[inline]
+    pub fn count(&self, value: &T) -> uint {
+        match self.map.find(value) {
+            None => 0u,
+            Some(count) => *count
+        }
+    }
+
+    /// Return true if the multiset has no elements in common with `other`.
+    pub fn is_disjoint(&self, other: &TreeMultiset<T>) -> bool {
+        let mut x = self.iter();
+        let mut y = other.iter();
+        let mut a = x.next();
+        let mut b = y.next();
+        while a.is_some() && b.is_some() {
+            let a1 = a.unwrap();
+            let b1 = b.unwrap();
+
+            match a1.cmp(b1) {
+                Less => a = x.next(),
+                Greater => b = y.next(),
+                Equal => return false,
+            }
+        }
+        true
+    }
+
+    /// Return true if, for any given element, the number times it occurs in the
+    /// multiset is not greater than the number of times it occurs in `other`.
+    pub fn is_subset(&self, other: &TreeMultiset<T>) -> bool {
+        let mut x = self.iter();
+        let mut y = other.iter();
+        let mut a = x.next();
+        let mut b = y.next();
+        while a.is_some() {
+            if b.is_none() {
+                return false;
+            }
+
+            let a1 = a.unwrap();
+            let b1 = b.unwrap();
+
+            match b1.cmp(a1) {
+                Less => (),
+                Greater => return false,
+                Equal => a = x.next(),
+            }
+
+            b = y.next();
+        }
+        true
+    }
+
+    /// Return true if the value occurs at least once in the multiset.
+    pub fn contains(&self, value: &T) -> bool {
+        self.count(value) > 0u
+    }
+
+    /// Return true if the multiset is a superset of another.
+    pub fn is_superset(&self, other: &TreeMultiset<T>) -> bool {
+        other.is_subset(self)
+    }
+
+    /// Add `n` occurrences of `value` to the multiset. Return true if the value
+    /// was not already present in the multiset.
+    pub fn insert_many(&mut self, value: T, n: uint) -> bool {
+        let curr = self.count(&value);
+        self.length += n;
+        self.map.insert(value, curr + n)
+    }
+
+    /// Remove `n` occurrences of `value` from the multiset. If there are less
+    /// than `n` occurrences, remove all occurrences. Return the number of
+    /// occurrences removed.
+    pub fn remove_many(&mut self, value: &T, n: uint) -> uint {
+        let curr = self.count(value);
+
+        if n >= curr {
+            self.map.remove(value);
+            self.length -= curr;
+            curr
+        } else {
+            match self.map.find_mut(value) {
+                None => 0u,
+                Some(mult) => {
+                    self.length -= n;
+                    *mult = curr - n;
+                    n
+                }
+            }
+        }
+    }
+
+    /// Add one occurrence of `value` to the multiset. Return true if the value
+    /// was not already present in the multiset.
+    pub fn insert(&mut self, value: T) -> bool {
+        self.insert_many(value, 1)
+    }
+
+    /// Remove one occurrence of `value` from the multiset. Return true if the
+    /// value was present in the multiset.
+    pub fn remove(&mut self, value: &T) -> bool {
+        self.remove_many(value, 1) > 0u
     }
 }
 
@@ -445,7 +417,7 @@ impl<'a, T: Ord, I: Iterator<&'a T>> Iterator<&'a T> for UnionItems<'a, T, I> {
 }
 
 mod test_mset {
-    use super::{TreeMultiset, Multiset, MutableMultiset};
+    use super::{TreeMultiset};
     use std::hash;
 
     #[test]

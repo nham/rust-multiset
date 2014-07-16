@@ -4,7 +4,7 @@ extern crate collections;
 
 pub use std::iter::{FromIterator, Peekable};
 pub use collections::treemap::{TreeMap, TreeSet, Entries, RevEntries};
-use multiset::{Multiset, MutableMultiset, TreeMultiset};
+use multiset::{TreeMultiset};
 
 pub mod multiset;
 
