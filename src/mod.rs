@@ -14,14 +14,27 @@ fn main() {
     let v3 = vec!(12i, 13);
     let v4 = vec!(12i, 13, 6);
 
-    let xs: TreeMultiset<&int> = FromIterator::from_iter(v1.iter());
-    let ys: TreeMultiset<&int> = FromIterator::from_iter(v2.iter());
-    let zs: TreeMultiset<&int> = FromIterator::from_iter(v3.iter());
-    let ws: TreeMultiset<&int> = FromIterator::from_iter(v4.iter());
+    let mut xs: TreeMultiset<int> = v1.move_iter().collect();
+    let mut ys: TreeMultiset<int> = v2.move_iter().collect();
+    let mut zs: TreeMultiset<int> = v3.move_iter().collect();
+    let mut ws: TreeMultiset<int> = v4.move_iter().collect();
 
     println!("{}", xs.is_subset(&ys));
     println!("{}", xs.is_disjoint(&ys));
     println!("{}", xs.is_disjoint(&zs));
     println!("{}", ys.is_disjoint(&ws));
+
+    xs.insert_many(6, 2);
+    xs.insert_many(9, 3);
+    xs.insert(15);
+    xs.insert_many(5, 1);
+
+    for x in xs.lower_bound(&6) {
+        println!("{}", x);
+    }
+
+    for x in xs.upper_bound(&6) {
+        println!("{}", x);
+    }
 
 }
