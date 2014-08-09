@@ -119,7 +119,7 @@ impl<T: Ord> TreeMultiset<T> {
     }
 
     /// Visit the values (in-order) representing the difference
-    pub fn difference<'a>(&'a self, other: &'a TreeMultiset<T>) 
+    pub fn difference<'a>(&'a self, other: &'a TreeMultiset<T>)
         -> DifferenceItems<'a, T, MultisetItems<'a, T>> {
         DifferenceItems{a: self.iter().peekable(), b: other.iter().peekable()}
     }
@@ -143,7 +143,7 @@ impl<T: Ord> TreeMultiset<T> {
     }
 
     /// Visit the values (in-order) representing the union
-    pub fn union<'a>(&'a self, other: &'a TreeMultiset<T>) 
+    pub fn union<'a>(&'a self, other: &'a TreeMultiset<T>)
         -> UnionItems<'a, T, MultisetItems<'a, T>> {
         UnionItems{a: self.iter().peekable(), b: other.iter().peekable()}
     }
